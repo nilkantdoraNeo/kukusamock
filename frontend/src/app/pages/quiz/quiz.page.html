@@ -1,0 +1,166 @@
+<ion-content class="app-root">
+  <div class="page quiz-page">
+    <header class="quiz-header">
+      <div class="quiz-title">{{ state.examName || 'Quiz' }}</div>
+      <div class="quiz-meta">
+        <div class="quiz-subtitle">{{ state.totalCount || questions.length }} Question</div>
+        <div class="timer-pill" *ngIf="state.status === 'active'">
+          {{ formatTime(state.totalSecondsLeft) }}
+        </div>
+        <button class="map-toggle" type="button" (click)="toggleMap()" aria-label="Open question map">
+          <span class="map-icon">
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+            <span></span><span></span><span></span>
+          </span>
+          <span class="map-label">Map</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="quiz-card" *ngIf="state.status === 'active' && questions.length">
+      <ng-container *ngFor="let q of questions; let i = index; trackBy: trackQuestion">
+        <div *ngIf="isActiveIndex(i)">
+          <div class="card-top">
+            <span class="question-count">Question: {{ state.currentIndex + 1 }}/{{ state.totalCount || questions.length }}</span>
+            <div class="card-actions">
+              <button class="bookmark-btn" type="button" [class.active]="isBookmarked(q.id)" (click)="toggleBookmark()">
+                {{ isBookmarked(q.id) ? 'Marked' : 'Mark' }}
+              </button>
+              <button class="quit-btn" type="button" (click)="confirmQuit()">Quit</button>
+            </div>
+          </div>
+
+          <h2 class="question-text">{{ q.question }}</h2>
+
+          <div class="options">
+            <button class="option" [class.selected]="isSelected(q.id, q.option_a)" (click)="answer(q.option_a)">
+              {{ q.option_a }}
+            </button>
+            <button class="option" [class.selected]="isSelected(q.id, q.option_b)" (click)="answer(q.option_b)">
+              {{ q.option_b }}
+            </button>
+            <button class="option" [class.selected]="isSelected(q.id, q.option_c)" (click)="answer(q.option_c)">
+              {{ q.option_c }}
+            </button>
+            <button class="option" [class.selected]="isSelected(q.id, q.option_d)" (click)="answer(q.option_d)">
+              {{ q.option_d }}
+            </button>
+          </div>
+
+          <button class="mark-review" type="button" [class.active]="isBookmarked(q.id)" (click)="toggleBookmark()">
+            {{ isBookmarked(q.id) ? 'Marked for Review' : 'Mark for Review' }}
+          </button>
+
+          <button class="see-result" type="button" (click)="submit()">See Result</button>
+
+          <div class="nav-row">
+            <button class="nav-btn prev" type="button" (click)="prev()" [disabled]="state.currentIndex === 0">Previous</button>
+            <button class="nav-btn skip" type="button" (click)="skip()">Skip</button>
+            <button class="nav-btn next" type="button" [class.submit]="state.currentIndex + 1 >= (state.totalCount || questions.length)" (click)="next()">
+              {{ state.currentIndex + 1 >= (state.totalCount || questions.length) ? 'Submit' : 'Next' }}
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <div class="map-overlay" *ngIf="mapOpen && state.status === 'active' && questions.length" (click)="closeMap()">
+      <div class="map-drawer" (click)="$event.stopPropagation()">
+        <div class="map-header">
+          <div>
+            <div class="map-title">Question Map</div>
+            <div class="map-subtitle">
+              Question {{ state.currentIndex + 1 }} of {{ state.totalCount || questions.length }}
+            </div>
+          </div>
+          <button class="map-close" type="button" (click)="closeMap()">Close</button>
+        </div>
+
+        <div class="map-counts">
+          <div class="count-card answered">
+            <span>Answered</span>
+            <strong>{{ answeredCount() }}</strong>
+          </div>
+          <div class="count-card not-answered">
+            <span>Not Answered</span>
+            <strong>{{ notAnsweredCount() }}</strong>
+          </div>
+          <div class="count-card bookmarked">
+            <span>Marked</span>
+            <strong>{{ bookmarkedCount() }}</strong>
+          </div>
+          <div class="count-card not-visited">
+            <span>Not Visited</span>
+            <strong>{{ notVisitedCount() }}</strong>
+          </div>
+        </div>
+
+        <div class="map-grid">
+          <button
+            class="map-chip"
+            type="button"
+            *ngFor="let item of questions; let i = index; trackBy: trackQuestion"
+            [class.answered]="isAnswered(item.id)"
+            [class.not-answered]="isNotAnswered(item.id)"
+            [class.bookmarked]="isBookmarked(item.id)"
+            [class.not-visited]="!isVisited(item.id)"
+            [class.current]="isActiveIndex(i)"
+            (click)="jumpTo(i); closeMap()">
+            <span class="chip-number">{{ i + 1 }}</span>
+            <span class="bookmark-flag" *ngIf="isBookmarked(item.id)" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot answered"></span>Answered</div>
+          <div class="legend-item"><span class="legend-dot not-answered"></span>Not Answered</div>
+          <div class="legend-item"><span class="legend-dot bookmarked"></span>Marked</div>
+          <div class="legend-item"><span class="legend-dot not-visited"></span>Not Visited</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quiz-card empty-state" *ngIf="loading">
+      <p class="muted">{{ state.questions.length ? 'Submitting quiz...' : 'Loading quiz...' }}</p>
+    </div>
+
+    <div class="quiz-card empty-state" *ngIf="!loading && state.status === 'idle' && errorMessage">
+      <p class="muted">{{ errorMessage }}</p>
+      <div class="button-row">
+        <button class="btn-primary" (click)="retry()">Retry</button>
+        <button class="btn-primary" (click)="goProfile()">Login</button>
+      </div>
+    </div>
+
+    <div class="quiz-card empty-state" *ngIf="!loading && state.status === 'idle' && !errorMessage">
+      <p class="muted">No quiz loaded yet.</p>
+      <div class="button-row">
+        <button class="btn-primary" (click)="retry()">Load Quiz</button>
+      </div>
+    </div>
+
+    <div class="confirm-overlay" *ngIf="confirmOpen" (click)="cancelConfirm()">
+      <div class="confirm-modal" (click)="$event.stopPropagation()">
+        <div class="confirm-icon">{{ confirmMode === 'quit' ? '!' : '?' }}</div>
+        <div class="confirm-title">
+          {{ confirmMode === 'quit' ? 'Quit Quiz?' : 'Submit Quiz?' }}
+        </div>
+        <div class="confirm-text">
+          {{ confirmMode === 'quit'
+            ? 'Are you sure you want to quit? Your answers will be submitted.'
+            : 'Are you sure you want to submit your quiz?' }}
+        </div>
+        <div class="confirm-actions">
+          <button class="confirm-btn ghost" type="button" (click)="cancelConfirm()">Cancel</button>
+          <button class="confirm-btn primary" type="button" (click)="acceptConfirm()">
+            {{ confirmMode === 'quit' ? 'Quit & Submit' : 'Submit' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</ion-content>
+
+

@@ -1,0 +1,510 @@
+.quiz-page {
+  padding: 22px 16px 32px;
+  display: grid;
+  gap: 16px;
+}
+
+.quiz-header {
+  text-align: center;
+  display: grid;
+  gap: 4px;
+}
+
+.quiz-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quiz-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.quiz-subtitle {
+  font-size: 12px;
+  color: #8b90a6;
+}
+
+.timer-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1f4a9a;
+  background: #e7efff;
+  border-radius: 999px;
+  padding: 4px 10px;
+}
+
+.quiz-card {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 16px;
+  box-shadow: 0 12px 26px rgba(32, 44, 92, 0.16);
+  display: grid;
+  gap: 12px;
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #52607a;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.question-count {
+  font-weight: 600;
+}
+
+.quit-btn {
+  background: transparent;
+  border: none;
+  color: #cf4d4d;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bookmark-btn {
+  border: 1px solid #dfe4f2;
+  background: #f6f7fb;
+  color: #8b90a6;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bookmark-btn.active {
+  background: #fff3d9;
+  border-color: #f5c76a;
+  color: #b87400;
+}
+
+.question-text {
+  font-size: 16px;
+  line-height: 1.4;
+  color: #1f2233;
+  white-space: pre-line;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.option {
+  border: 1px solid #e2e6f1;
+  border-radius: 12px;
+  padding: 12px 14px;
+  text-align: left;
+  background: #ffffff;
+  color: #2b2f45;
+  font-weight: 600;
+  box-shadow: 0 8px 16px rgba(33, 44, 92, 0.08);
+  cursor: pointer;
+}
+
+.option.selected {
+  background: #1f4a9a;
+  color: #ffffff;
+  border-color: #1f4a9a;
+  box-shadow: 0 10px 18px rgba(31, 74, 154, 0.25);
+}
+
+.see-result {
+  background: transparent;
+  border: none;
+  color: #2f5fb7;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  justify-self: start;
+}
+
+.mark-review {
+  border: none;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 700;
+  background: #f5b34f;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 10px 18px rgba(245, 179, 79, 0.25);
+  width: 100%;
+  text-align: center;
+}
+
+.mark-review.active {
+  background: #e09a35;
+}
+
+.map-toggle {
+  border: 1px solid #dfe4f2;
+  background: #ffffff;
+  color: #52607a;
+  border-radius: 999px;
+  padding: 4px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.map-icon {
+  display: grid;
+  grid-template-columns: repeat(3, 4px);
+  gap: 2px;
+}
+
+.map-icon span {
+  width: 4px;
+  height: 4px;
+  border-radius: 2px;
+  background: #69708a;
+  display: block;
+}
+
+.map-label {
+  letter-spacing: 0.2px;
+}
+
+.nav-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.map-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 18, 32, 0.5);
+  display: grid;
+  place-items: end center;
+  padding: 16px;
+  z-index: 40;
+}
+
+.map-drawer {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 16px;
+  box-shadow: 0 24px 40px rgba(20, 27, 53, 0.3);
+  display: grid;
+  gap: 14px;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2233;
+}
+
+.map-subtitle {
+  font-size: 11px;
+  color: #8b90a6;
+}
+
+.map-close {
+  border: none;
+  background: #eef1f8;
+  color: #2f5fb7;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.map-counts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.count-card {
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.count-card strong {
+  font-size: 16px;
+}
+
+.count-card.answered {
+  background: #e6f6ec;
+  color: #1b6b3f;
+}
+
+.count-card.not-answered {
+  background: #fff0f0;
+  color: #b13a3a;
+}
+
+.count-card.bookmarked {
+  background: #fff3d9;
+  color: #8a5a00;
+}
+
+.count-card.not-visited {
+  background: #eef1f8;
+  color: #5a637a;
+}
+
+.map-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  overflow: auto;
+  max-height: 40vh;
+  padding-bottom: 4px;
+}
+
+.map-chip {
+  border: 1px solid #dfe4f2;
+  background: #f6f7fb;
+  color: #3a4361;
+  border-radius: 999px;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  position: relative;
+}
+
+.map-chip.answered {
+  background: #2f8f57;
+  border-color: #2f8f57;
+  color: #ffffff;
+}
+
+.map-chip.not-answered {
+  background: #fff0f0;
+  border-color: #e27171;
+  color: #b13a3a;
+}
+
+.map-chip.not-visited {
+  background: #f2f3f7;
+  border-color: #d7dbe7;
+  color: #8c93a8;
+}
+
+.map-chip.bookmarked {
+  box-shadow: 0 0 0 2px #f2b84b;
+}
+
+.map-chip.current {
+  border-color: #2f5fb7;
+  box-shadow: 0 0 0 2px rgba(47, 95, 183, 0.35);
+}
+
+.bookmark-flag {
+  position: absolute;
+  top: -2px;
+  right: -1px;
+  width: 10px;
+  height: 12px;
+  background: #f5b34f;
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.bookmark-flag::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  margin: auto;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid #f5b34f;
+}
+
+.map-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+  font-size: 11px;
+  color: #6f7892;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #dfe4f2;
+}
+
+.legend-dot.answered {
+  background: #2f8f57;
+}
+
+.legend-dot.not-answered {
+  background: #e27171;
+}
+
+.legend-dot.bookmarked {
+  background: #f2b84b;
+}
+
+.legend-dot.not-visited {
+  background: #c4cadc;
+}
+
+.nav-btn {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.nav-btn.prev {
+  background: #3b4357;
+  color: #ffffff;
+}
+
+.nav-btn.skip {
+  background: #e6e9f2;
+  color: #394055;
+}
+
+.nav-btn.next {
+  background: #35a853;
+  color: #ffffff;
+}
+
+.nav-btn.next.submit {
+  background: #cf4d4d;
+}
+
+.nav-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empty-state {
+  text-align: center;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 28, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 30;
+  padding: 24px 16px;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-modal {
+  width: min(360px, 100%);
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px;
+  display: grid;
+  gap: 10px;
+  text-align: center;
+  box-shadow: 0 18px 36px rgba(20, 27, 53, 0.25);
+}
+
+.confirm-icon {
+  width: 46px;
+  height: 46px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: rgba(47, 95, 183, 0.12);
+  color: #1f4a9a;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.confirm-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1f2233;
+}
+
+.confirm-text {
+  font-size: 12px;
+  color: #6f7892;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.confirm-btn {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+
+.confirm-btn.primary {
+  background: #1f4a9a;
+  color: #ffffff;
+}
+
+.confirm-btn.ghost {
+  background: #eef1f8;
+  color: #2b2f45;
+}
+:host ion-content.app-root {
+  --background: #f4f5fb;
+  background: #f4f5fb;
+}

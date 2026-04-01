@@ -1,0 +1,31 @@
+{
+  "name": "quiz-mobile-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "\"C:\\Users\\Client\\AppData\\Local\\nvm\\v20.19.0\\node.exe\" ./node_modules/@angular/cli/bin/ng.js serve --host localhost --port 4200",
+    "build": "\"C:\\Users\\Client\\AppData\\Local\\nvm\\v20.19.0\\node.exe\" ./node_modules/@angular/cli/bin/ng.js build --configuration production",
+    "ionic:serve": "\"C:\\Users\\Client\\AppData\\Local\\nvm\\v20.19.0\\node.exe\" ./node_modules/@angular/cli/bin/ng.js serve --host localhost --port 4200"
+  },
+  "dependencies": {
+    "@angular/animations": "latest",
+    "@angular/common": "latest",
+    "@angular/compiler": "latest",
+    "@angular/core": "latest",
+    "@angular/forms": "latest",
+    "@angular/platform-browser": "latest",
+    "@angular/platform-browser-dynamic": "latest",
+    "@angular/router": "latest",
+    "@ionic/angular": "latest",
+    "ionicons": "latest",
+    "rxjs": "latest",
+    "tslib": "^2.6.2",
+    "zone.js": "latest"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "latest",
+    "@angular/cli": "latest",
+    "@angular/compiler-cli": "latest",
+    "typescript": "latest"
+  }
+}

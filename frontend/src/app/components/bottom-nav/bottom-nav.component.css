@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+  z-index: 1000;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 10px 12px;
+  box-shadow: 0 12px 26px rgba(33, 47, 90, 0.12);
+  width: min(560px, calc(100% - 32px));
+  max-width: 560px;
+}
+
+.nav-item {
+  flex: 1;
+  color: #7d849b;
+  font-size: 10px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.nav-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: #f1f3f9;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: #5c637a;
+}
+
+.nav-item.active {
+  color: #1f4a9a;
+}
+
+.nav-item.active .nav-icon {
+  background: #e4ecff;
+  color: #1f4a9a;
+}

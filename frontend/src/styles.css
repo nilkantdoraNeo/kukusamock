@@ -1,0 +1,118 @@
+@import "@ionic/angular/css/core.css";
+@import "@ionic/angular/css/normalize.css";
+@import "@ionic/angular/css/structure.css";
+@import "@ionic/angular/css/typography.css";
+@import "@ionic/angular/css/padding.css";
+@import "@ionic/angular/css/float-elements.css";
+@import "@ionic/angular/css/text-alignment.css";
+@import "@ionic/angular/css/text-transformation.css";
+@import "@ionic/angular/css/flex-utils.css";
+@import "@ionic/angular/css/display.css";
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
+
+:root {
+  --bg: #f6f7fb;
+  --text-primary: #1f2233;
+  --text-secondary: #8b90a6;
+  --surface: #ffffff;
+  --surface-strong: #ffffff;
+  --glass-shadow: 0 12px 26px rgba(32, 44, 92, 0.12);
+  --accent: #1f4a9a;
+  --accent-2: #2f6df6;
+  --accent-soft: rgba(47, 109, 246, 0.15);
+  --border-soft: #e6e9f2;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+a {
+  color: inherit;
+}
+
+.app-root {
+  --background: transparent;
+  background: var(--bg);
+}
+
+.page {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.muted {
+  color: var(--text-secondary);
+}
+
+.glass-card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 18px;
+  box-shadow: var(--glass-shadow);
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #ffffff;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(47, 109, 246, 0.35);
+  background: var(--surface-strong);
+  color: #1f4a9a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.quiz-card {
+  border-radius: 22px;
+}
+
+ion-content {
+  --background: transparent;
+}
+
+ion-progress-bar {
+  --progress-background: rgba(47, 109, 246, 0.2);
+  --progress-bar-background: var(--accent);
+  border-radius: 999px;
+}
+
+ion-item {
+  --highlight-color-focused: var(--accent);
+  --background: transparent;
+}
+
+ion-input {
+  color: var(--text-primary);
+}
+
