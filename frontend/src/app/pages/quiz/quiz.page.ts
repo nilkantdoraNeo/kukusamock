@@ -55,9 +55,7 @@ export class QuizPage implements OnInit, OnDestroy {
   }
 
   ionViewWillLeave() {
-    if (this.state?.status === 'active' && this.state.answers?.length) {
-      this.quiz.submitEarly();
-    }
+    // Keep state for resume; submit is handled explicitly via Quit/Submit.
   }
 
   answer(option: string) {
@@ -227,6 +225,9 @@ export class QuizPage implements OnInit, OnDestroy {
     const quickLimit = limitParam || 15;
     this.examId = examId;
     const snapshot = this.quiz.getSnapshot();
+    if (this.quiz.restoreSavedState(examId)) {
+      return;
+    }
     if (snapshot.examId !== examId) {
       this.quiz.reset();
     }

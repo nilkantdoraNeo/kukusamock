@@ -41,5 +41,14 @@ export async function optionalAuthMiddleware(req, res, next) {
   if (!token) {
     return next();
   }
-  return authMiddleware(req, res, next);
+  try {
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data?.user) {
+      return next();
+    }
+    req.user = data.user;
+    return attachProfile(req, res, next);
+  } catch (err) {
+    return next();
+  }
 }

@@ -31,6 +31,7 @@ export interface QuizState {
   negativeMarkRatio?: number;
   errorMessage?: string;
   user?: UserProfile | null;
+  quizToken?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,6 +39,7 @@ export class QuizStateService {
   private timerSub?: Subscription;
   private overallTimerSub?: Subscription;
   private loading = false;
+  private storageKey = 'quiz_state_v1';
   private stateSubject = new BehaviorSubject<QuizState>({
     questions: [],
     currentIndex: 0,
@@ -61,7 +63,8 @@ export class QuizStateService {
     marksPerQuestion: 0,
     negativeMarkRatio: 0,
     errorMessage: '',
-    user: null
+    user: null,
+    quizToken: ''
   });
 
   state$ = this.stateSubject.asObservable();
@@ -70,7 +73,7 @@ export class QuizStateService {
 
   loadQuiz(
     examId: number,
-    options: { limit?: number; durationSeconds?: number; questionLimit?: number; random?: boolean; perQuestionTimer?: boolean } = {}
+    options: { limit?: number; durationSeconds?: number; questionLimit?: number; random?: boolean; perQuestionTimer?: boolean; difficulty?: string | string[] } = {}
   ) {
     if (this.loading) return;
     this.loading = true;
@@ -81,13 +84,13 @@ export class QuizStateService {
     this.ensureToken().pipe(
       switchMap((ok) => ok
         ? forkJoin({
-          questions: this.api.fetchQuiz(examId, { daily: true, limit: options.limit, random: options.random }),
+          questions: this.api.fetchQuiz(examId, { daily: true, limit: options.limit, random: options.random, difficulty: options.difficulty }),
           exam: this.api.examById(examId).pipe(catchError(() => of(null)))
         })
         : of(null)
       )
     ).subscribe({
-      next: (payload: { questions: QuizQuestion[] | { data?: QuizQuestion[]; questions?: QuizQuestion[] }; exam: Exam | null } | null) => {
+      next: (payload: any | null) => {
         if (!payload) {
           this.loading = false;
           this.update({ status: 'idle', errorMessage: 'Please log in to continue.' });
@@ -95,6 +98,13 @@ export class QuizStateService {
         }
 
         let questions = this.normalizeQuestions(payload.questions);
+        const quizToken = this.extractQuizToken(payload.questions);
+        const tokenTotal = this.extractTotalCount(payload.questions);
+        if (!quizToken) {
+          this.loading = false;
+          this.update({ status: 'idle', errorMessage: 'Failed to start quiz. Please try again.' });
+          return;
+        }
         if (options.limit && questions.length > options.limit) {
           questions = questions.slice(0, options.limit);
         }
@@ -106,7 +116,7 @@ export class QuizStateService {
           return;
         }
 
-        const totalCount = questions.length;
+        const totalCount = tokenTotal || questions.length;
         const durationSeconds = Number(options.durationSeconds ?? exam?.duration_seconds ?? totalCount * 20);
         const questionLimit = Number(options.questionLimit ?? exam?.question_limit ?? totalCount);
         const marksPerQuestion = Number(exam?.marks_per_question ?? 3);
@@ -139,7 +149,8 @@ export class QuizStateService {
           marksPerQuestion,
           negativeMarkRatio,
           errorMessage: '',
-          user: null
+          user: null,
+          quizToken
         });
         this.loading = false;
         if (secondsPerQuestion > 0) {
@@ -264,7 +275,7 @@ export class QuizStateService {
     }
     const questionIds = state.questions.map(q => q.id);
     this.update({ status: 'loading', errorMessage: '' });
-    this.api.submitQuiz(state.examId, state.answers, questionIds, state.totalCount).subscribe({
+    this.api.submitQuiz(state.examId, state.answers, questionIds, state.totalCount, state.quizToken).subscribe({
       next: (res: { score: number; correct: Record<number, string>; user?: UserProfile; stats?: { correctCount: number; wrongCount: number; skippedCount: number; totalCount: number } }) => {
         if (res.user) {
           this.auth.user.set(res.user);
@@ -313,7 +324,8 @@ export class QuizStateService {
       marksPerQuestion: 0,
       negativeMarkRatio: 0,
       errorMessage: '',
-      user: null
+      user: null,
+      quizToken: ''
     });
   }
 
@@ -321,12 +333,71 @@ export class QuizStateService {
     return this.stateSubject.value;
   }
 
+  getSavedSummary() {
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const state = parsed?.state;
+      if (!state || state.status !== 'active' || !state.questions?.length) return null;
+      return {
+        examId: state.examId,
+        examName: state.examName || 'Quiz',
+        currentIndex: state.currentIndex || 0,
+        totalCount: state.totalCount || state.questions.length,
+        totalSecondsLeft: state.totalSecondsLeft || 0,
+        savedAt: parsed?.savedAt || 0
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  restoreSavedState(examId?: number) {
+    try {
+      const raw = localStorage.getItem(this.storageKey);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      const state = parsed?.state;
+      if (!state || state.status !== 'active' || !state.questions?.length) return false;
+      if (examId && state.examId !== examId) return false;
+      this.timerSub?.unsubscribe();
+      this.overallTimerSub?.unsubscribe();
+      this.loading = false;
+      this.stateSubject.next(state);
+      if (state.secondsPerQuestion > 0) {
+        this.startTimer(state.secondsLeft || state.secondsPerQuestion);
+      }
+      this.startOverallTimer(state.totalSecondsLeft || 0);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   private ensureToken() {
     return of(!!this.auth.getToken());
   }
 
   private update(partial: Partial<QuizState>) {
-    this.stateSubject.next({ ...this.stateSubject.value, ...partial });
+    const next = { ...this.stateSubject.value, ...partial };
+    this.stateSubject.next(next);
+    this.syncStorage(next);
+  }
+
+  private syncStorage(state: QuizState) {
+    try {
+      if (state.status === 'active' && state.questions?.length) {
+        const payload = { state, savedAt: Date.now() };
+        localStorage.setItem(this.storageKey, JSON.stringify(payload));
+        return;
+      }
+      if (state.status === 'finished' || state.status === 'idle') {
+        localStorage.removeItem(this.storageKey);
+      }
+    } catch {
+      // ignore storage errors
+    }
   }
 
   private normalizeChoice(value: string) {
@@ -355,5 +426,16 @@ export class QuizStateService {
     if (Array.isArray(payload.questions)) return payload.questions;
     if (Array.isArray(payload.data)) return payload.data;
     return [];
+  }
+
+  private extractQuizToken(payload: any): string {
+    if (payload?.quiz_token) return String(payload.quiz_token || '');
+    return '';
+  }
+
+  private extractTotalCount(payload: any): number {
+    const raw = payload?.total_count;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }
 }

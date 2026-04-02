@@ -2,63 +2,34 @@
   padding: 18px 16px 96px;
   display: grid;
   gap: 16px;
-  color: var(--text-primary);
 }
 
-.result-hero {
-  padding: 20px;
-  text-align: center;
-  display: grid;
+.header-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
 }
 
-.score {
-  font-size: 42px;
+.title {
+  font-size: 16px;
   font-weight: 700;
-  color: var(--accent);
+  color: var(--text-primary);
 }
 
-.kicker {
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 10px;
+.subtitle {
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
-.summary {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+.btn-secondary {
   background: var(--surface-soft);
-  border-radius: 16px;
-  padding: 12px;
-}
-
-.summary-item {
-  display: grid;
-  gap: 4px;
-}
-
-.summary-item .label {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--text-secondary);
-}
-
-.summary-item .value {
+  color: var(--text-primary);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 10px;
   font-weight: 700;
-}
-
-.rank-pill {
-  display: inline-flex;
-  align-self: center;
-  justify-self: center;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-weight: 700;
+  cursor: pointer;
 }
 
 .section-title {
@@ -76,7 +47,6 @@
 .question {
   font-weight: 700;
   margin-bottom: 6px;
-  color: var(--text-primary);
 }
 
 .answer-row {
@@ -107,10 +77,6 @@
 
 .answer-row.wrong .value {
   color: var(--danger);
-}
-
-.answer-row.skipped .value {
-  color: var(--text-secondary);
 }
 
 .option-list {
@@ -200,11 +166,6 @@
   color: var(--success);
 }
 
-.option-tag.selected.correct {
-  background: var(--success-soft);
-  color: var(--success);
-}
-
 .option-tag.selected.wrong {
   background: var(--danger-soft);
   color: var(--danger);
@@ -236,5 +197,4 @@
 :host ion-content.app-root {
   --background: var(--bg);
   background: var(--bg);
-  color: var(--text-primary);
 }

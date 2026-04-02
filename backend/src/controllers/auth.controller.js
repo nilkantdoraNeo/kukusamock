@@ -43,14 +43,6 @@ export async function login(req, res, next) {
       password
     });
     if (error || !data?.user) {
-      try {
-        const { data: lookup } = await supabaseAdmin.auth.admin.getUserByEmail(email);
-        if (!lookup?.user) {
-          return res.status(404).json({ message: 'User does not exist.' });
-        }
-      } catch {
-        // ignore lookup errors and fall back to generic message
-      }
       return res.status(401).json({ message: 'User id or password wrong.' });
     }
 

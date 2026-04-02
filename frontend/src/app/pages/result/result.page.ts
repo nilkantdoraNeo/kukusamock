@@ -5,7 +5,7 @@ import { QuizStateService } from '../../services/quiz-state.service';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { BottomNavComponent } from '../../components/bottom-nav/bottom-nav.component';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-result',
@@ -103,14 +103,37 @@ export class ResultPage implements OnInit {
     public auth: AuthService,
     private api: ApiService,
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   ngOnInit() {
+    const attemptId = Number(this.route.snapshot.queryParamMap.get('attemptId') || 0);
+    if (attemptId) {
+      this.loadAttempt(attemptId);
+      return;
+    }
     const hasExplanation = this.state?.questions?.some((q: any) => q?.explanation);
     if (!this.state?.questions?.length || !hasExplanation) {
       this.loadLatest(!this.state?.questions?.length);
     }
+  }
+
+  private loadAttempt(attemptId: number) {
+    this.loading = true;
+    this.errorMessage = '';
+    this.api.attemptById(attemptId).subscribe({
+      next: (res) => {
+        this.applyAttemptPayload(res?.attempt, res?.answers || [], res?.correct || {});
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err?.status === 401
+          ? 'Please log in to view your result.'
+          : (err?.error?.message || 'Unable to load this attempt.');
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   private loadLatest(showLoader = true) {
@@ -119,40 +142,7 @@ export class ResultPage implements OnInit {
     }
     this.api.latestAttempt().subscribe({
       next: (res) => {
-        const attempt = res?.attempt;
-        const answers = res?.answers || [];
-        const currentQuestions = this.state?.questions || [];
-        const answerQuestions = answers.map((a: any) => a.question).filter(Boolean);
-        const questions = currentQuestions.length
-          ? currentQuestions.map((q: any) => {
-            const extra = answerQuestions.find((aq: any) => aq?.id === q?.id);
-            return extra ? { ...q, ...extra } : q;
-          })
-          : answerQuestions;
-        const answerList = answers.map((a: any) => ({
-          question_id: a.question?.id,
-          answer: a.answer
-        })).filter((a: any) => a.question_id);
-
-        const totalCount = Number(attempt?.total_count ?? this.state?.totalCount ?? questions.length ?? 0);
-        const correctCount = Number(attempt?.correct_count ?? 0);
-        const skippedCount = Math.max(0, totalCount - answers.length);
-        const wrongCount = Math.max(0, totalCount - correctCount - skippedCount);
-
-        this.state = {
-          ...this.state,
-          questions,
-          answers: answerList,
-          correctMap: { ...(this.state?.correctMap || {}), ...(res?.correct || {}) },
-          score: Number(attempt?.score ?? 0),
-          correctCount,
-          wrongCount,
-          skippedCount,
-          totalCount,
-          examName: attempt?.exam?.name || this.state?.examName
-        };
-        this.loading = false;
-        this.cdr.detectChanges();
+        this.applyAttemptPayload(res?.attempt, res?.answers || [], res?.correct || {});
       },
       error: (err) => {
         this.loading = false;
@@ -160,6 +150,41 @@ export class ResultPage implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private applyAttemptPayload(attempt: any, answers: any[], correct: Record<number, string>) {
+    const currentQuestions = this.state?.questions || [];
+    const answerQuestions = (answers || []).map((a: any) => a.question).filter(Boolean);
+    const questions = currentQuestions.length
+      ? currentQuestions.map((q: any) => {
+        const extra = answerQuestions.find((aq: any) => aq?.id === q?.id);
+        return extra ? { ...q, ...extra } : q;
+      })
+      : answerQuestions;
+    const answerList = (answers || []).map((a: any) => ({
+      question_id: a.question?.id,
+      answer: a.answer
+    })).filter((a: any) => a.question_id);
+
+    const totalCount = Number(attempt?.total_count ?? this.state?.totalCount ?? questions.length ?? 0);
+    const correctCount = Number(attempt?.correct_count ?? 0);
+    const skippedCount = Math.max(0, totalCount - answers.length);
+    const wrongCount = Math.max(0, totalCount - correctCount - skippedCount);
+
+    this.state = {
+      ...this.state,
+      questions,
+      answers: answerList,
+      correctMap: { ...(this.state?.correctMap || {}), ...(correct || {}) },
+      score: Number(attempt?.score ?? 0),
+      correctCount,
+      wrongCount,
+      skippedCount,
+      totalCount,
+      examName: attempt?.exam?.name || this.state?.examName
+    };
+    this.loading = false;
+    this.cdr.detectChanges();
   }
 
   totalCount() {

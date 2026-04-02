@@ -33,6 +33,22 @@ const examSchema = z.object({
   })
 });
 
+const examPatchSchema = z.object({
+  params: z.object({
+    id: z.coerce.number()
+  }),
+  body: z.object({
+    name: z.string().min(2).optional(),
+    slug: z.string().min(2).optional(),
+    description: z.string().optional(),
+    is_active: z.boolean().optional(),
+    duration_seconds: z.coerce.number().optional(),
+    question_limit: z.coerce.number().optional(),
+    marks_per_question: z.coerce.number().optional(),
+    negative_mark_ratio: z.coerce.number().optional()
+  })
+});
+
 const questionSchema = z.object({
   body: z.object({
     exam_id: z.coerce.number(),
@@ -42,6 +58,24 @@ const questionSchema = z.object({
     option_c: z.string(),
     option_d: z.string(),
     correct_answer: z.string(),
+    explanation: z.string().optional(),
+    difficulty: z.string().optional(),
+    is_active: z.boolean().optional()
+  })
+});
+
+const questionPatchSchema = z.object({
+  params: z.object({
+    id: z.coerce.number()
+  }),
+  body: z.object({
+    exam_id: z.coerce.number().optional(),
+    question: z.string().optional(),
+    option_a: z.string().optional(),
+    option_b: z.string().optional(),
+    option_c: z.string().optional(),
+    option_d: z.string().optional(),
+    correct_answer: z.string().optional(),
     explanation: z.string().optional(),
     difficulty: z.string().optional(),
     is_active: z.boolean().optional()
@@ -59,12 +93,12 @@ router.use(authMiddleware, adminMiddleware);
 
 router.get('/exams', adminListExams);
 router.post('/exams', validate(examSchema), adminCreateExam);
-router.patch('/exams/:id', adminUpdateExam);
+router.patch('/exams/:id', validate(examPatchSchema), adminUpdateExam);
 
 router.get('/questions', adminListQuestions);
 router.post('/questions', validate(questionSchema), adminCreateQuestion);
 router.post('/questions/import', validate(importSchema), adminImportQuestions);
-router.patch('/questions/:id', adminUpdateQuestion);
+router.patch('/questions/:id', validate(questionPatchSchema), adminUpdateQuestion);
 router.delete('/questions/:id', adminDeleteQuestion);
 
 router.get('/users', adminListUsers);

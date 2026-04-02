@@ -3,8 +3,10 @@ import { z } from 'zod';
 import { signup, login, profile, updateProfile } from '../controllers/auth.controller.js';
 import { validate } from '../middleware/validate.middleware.js';
 import { authMiddleware } from '../middleware/auth.middleware.js';
+import { rateLimit } from '../middleware/rate-limit.middleware.js';
 
 const router = Router();
+const authLimiter = rateLimit({ windowMs: 60_000, max: 10, keyPrefix: 'auth' });
 
 const signupSchema = z.object({
   body: z.object({
@@ -44,8 +46,8 @@ const updateProfileSchema = z.object({
   })
 });
 
-router.post('/signup', validate(signupSchema), signup);
-router.post('/login', validate(loginSchema), login);
+router.post('/signup', authLimiter, validate(signupSchema), signup);
+router.post('/login', authLimiter, validate(loginSchema), login);
 router.get('/profile', authMiddleware, profile);
 router.patch('/profile', authMiddleware, validate(updateProfileSchema), updateProfile);
 

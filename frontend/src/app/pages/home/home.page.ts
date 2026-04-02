@@ -21,6 +21,15 @@ interface RecentAttemptView {
   icon: string;
 }
 
+interface ResumeSummary {
+  examId?: number;
+  examName: string;
+  currentIndex: number;
+  totalCount: number;
+  totalSecondsLeft: number;
+  savedAt: number;
+}
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -61,9 +70,36 @@ interface RecentAttemptView {
         <section class="quick-test">
           <div>
             <div class="section-title">Quick 15-Minute Test</div>
-            <div class="muted small-text">15 questions • 15 minutes</div>
+            <div class="muted small-text">15 questions - 15 minutes</div>
           </div>
           <button class="quick-btn" type="button" (click)="openQuickTest()">Start</button>
+        </section>
+
+        <section class="resume-test" *ngIf="resumeSummary">
+          <div>
+            <div class="section-title">Resume Test</div>
+            <div class="muted small-text">
+              {{ resumeSummary.examName }} - Q{{ resumeSummary.currentIndex + 1 }}/{{ resumeSummary.totalCount }}
+              <span *ngIf="resumeSummary.totalSecondsLeft"> - {{ formatTime(resumeSummary.totalSecondsLeft) }} left</span>
+            </div>
+          </div>
+          <button class="resume-btn" type="button" (click)="resumeTest()">Resume</button>
+        </section>
+
+        <section class="custom-test">
+          <div>
+            <div class="section-title">Custom Test</div>
+            <div class="muted small-text">Pick exam, count, and time</div>
+          </div>
+          <button class="custom-btn" type="button" (click)="openCustomTest()">Create</button>
+        </section>
+
+        <section class="incorrect-test">
+          <div>
+            <div class="section-title">Incorrect Notebook</div>
+            <div class="muted small-text">Revisit the questions you got wrong</div>
+          </div>
+          <button class="incorrect-btn" type="button" (click)="goIncorrect()">Open</button>
         </section>
 
         <div class="search-row">
@@ -86,7 +122,7 @@ interface RecentAttemptView {
 
         <div class="section-title">Recent Activity</div>
         <div class="activity-list" *ngIf="filteredAttempts().length">
-          <div class="activity-card" *ngFor="let item of filteredAttempts(); trackBy: trackAttempt">
+          <button class="activity-card" type="button" *ngFor="let item of filteredAttempts(); trackBy: trackAttempt" (click)="openAttempt(item)">
           <div class="activity-left">
             <div class="activity-icon" [style.background]="item.color">{{ item.icon }}</div>
             <div>
@@ -98,7 +134,7 @@ interface RecentAttemptView {
             <div class="progress-ring" [style.--progress]="item.progress" [style.--ring-color]="item.color">
               <span>{{ item.correctCount }}/{{ item.totalCount || 0 }}</span>
             </div>
-          </div>
+          </button>
         </div>
 
         <div class="empty-state" *ngIf="!loadingAttempts && !filteredAttempts().length">
@@ -120,6 +156,39 @@ interface RecentAttemptView {
             {{ exam.name }}
           </button>
         </div>
+        <div class="muted small-text" *ngIf="!exams.length">No exams available.</div>
+      </div>
+    </div>
+
+    <div class="quick-overlay" *ngIf="customTestOpen" (click)="closeCustomTest()">
+      <div class="quick-modal custom-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title">Custom Test</div>
+          <button class="modal-close" type="button" (click)="closeCustomTest()">X</button>
+        </div>
+        <div class="custom-grid">
+          <label class="custom-field">
+            <span>Exam</span>
+            <select [(ngModel)]="customExamId">
+              <option *ngFor="let exam of exams; trackBy: trackExam" [value]="exam.id">{{ exam.name }}</option>
+            </select>
+          </label>
+          <label class="custom-field">
+            <span>Questions</span>
+            <input type="number" min="1" max="200" [(ngModel)]="customQuestionCount" />
+          </label>
+          <label class="custom-field">
+            <span>Duration (mins)</span>
+            <input type="number" min="5" max="240" [(ngModel)]="customDurationMins" />
+          </label>
+          <label class="custom-toggle">
+            <input type="checkbox" [(ngModel)]="customRandom" />
+            <span>Randomize questions</span>
+          </label>
+        </div>
+        <button class="custom-start" type="button" (click)="startCustomTest()" [disabled]="!exams.length">
+          Start Custom Test
+        </button>
         <div class="muted small-text" *ngIf="!exams.length">No exams available.</div>
       </div>
     </div>
@@ -148,6 +217,13 @@ export class HomePage {
   recentAttempts: RecentAttemptView[] = [];
   loadingAttempts = true;
   quickTestOpen = false;
+  customTestOpen = false;
+  resumeSummary: ResumeSummary | null = null;
+
+  customExamId: number | null = null;
+  customQuestionCount = 25;
+  customDurationMins = 30;
+  customRandom = true;
 
   private palette = ['#ff8a34', '#4c7ef3', '#21b28e', '#9b6bff', '#f25c5c'];
 
@@ -156,11 +232,13 @@ export class HomePage {
   constructor() {
     this.loadExams();
     this.loadRecentAttempts();
+    this.refreshResume();
   }
 
   ionViewWillEnter() {
     this.loadExams();
     this.loadRecentAttempts();
+    this.refreshResume();
   }
 
   loadExams() {
@@ -231,6 +309,17 @@ export class HomePage {
     this.quickTestOpen = false;
   }
 
+  openCustomTest() {
+    this.customTestOpen = true;
+    if (!this.customExamId && this.exams.length) {
+      this.customExamId = this.exams[0].id;
+    }
+  }
+
+  closeCustomTest() {
+    this.customTestOpen = false;
+  }
+
   startQuickTest(exam: Exam) {
     if (!this.auth.getToken()) {
       this.router.navigateByUrl('/profile');
@@ -245,6 +334,53 @@ export class HomePage {
       perQuestionTimer: false
     });
     this.router.navigateByUrl(`/quiz/${exam.id}?quick=1&limit=15`);
+  }
+
+  startCustomTest() {
+    if (!this.auth.getToken()) {
+      this.router.navigateByUrl('/profile');
+      return;
+    }
+    const examId = Number(this.customExamId || this.exams?.[0]?.id || 0);
+    if (!examId) return;
+    const count = Math.min(Math.max(Number(this.customQuestionCount || 0), 1), 200);
+    const durationMins = Math.min(Math.max(Number(this.customDurationMins || 0), 5), 240);
+    this.customTestOpen = false;
+    this.quiz.loadQuiz(examId, {
+      limit: count,
+      durationSeconds: durationMins * 60,
+      questionLimit: count,
+      random: this.customRandom,
+      perQuestionTimer: false
+    });
+    this.router.navigateByUrl(`/quiz/${examId}?custom=1&limit=${count}`);
+  }
+
+  resumeTest() {
+    if (!this.resumeSummary?.examId) return;
+    if (!this.auth.getToken()) {
+      this.router.navigateByUrl('/profile');
+      return;
+    }
+    const restored = this.quiz.restoreSavedState(this.resumeSummary.examId);
+    if (restored) {
+      this.router.navigateByUrl(`/quiz/${this.resumeSummary.examId}?resume=1`);
+    }
+  }
+
+  goIncorrect() {
+    if (!this.auth.getToken()) {
+      this.router.navigateByUrl('/profile');
+      return;
+    }
+    this.router.navigateByUrl('/incorrect');
+  }
+
+  formatTime(totalSeconds: number) {
+    const safe = Math.max(0, Number(totalSeconds || 0));
+    const minutes = Math.floor(safe / 60);
+    const seconds = safe % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   }
 
   displayName() {
@@ -285,6 +421,10 @@ export class HomePage {
     return this.recentAttempts.filter((item) => item.examName.toLowerCase().includes(term));
   }
 
+  private refreshResume() {
+    this.resumeSummary = this.quiz.getSavedSummary();
+  }
+
   categoryInitial(exam: Exam) {
     return exam?.name ? exam.name[0].toUpperCase() : 'Q';
   }
@@ -323,6 +463,11 @@ export class HomePage {
     };
   }
 
+  openAttempt(item: RecentAttemptView) {
+    if (!item?.id) return;
+    this.router.navigate(['/result'], { queryParams: { attemptId: item.id } });
+  }
+
   private loadLatestAttemptFallback() {
     this.api.latestAttempt().subscribe({
       next: (res) => {
@@ -343,3 +488,4 @@ export class HomePage {
     this.navSub?.unsubscribe();
   }
 }
+

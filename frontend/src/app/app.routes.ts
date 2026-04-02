@@ -32,6 +32,12 @@ export const routes: Routes = [
   },
 
   {
+    path: 'incorrect',
+    loadComponent: () => import('./pages/incorrect/incorrect.page').then(m => m.IncorrectPage),
+    canActivate: [authGuard]
+  },
+
+  {
     path: 'profile',
     loadComponent: () => import('./pages/profile/profile.page').then(m => m.ProfilePage)
     // add authGuard if needed

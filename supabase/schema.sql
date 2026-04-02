@@ -122,3 +122,37 @@
 
   create policy "Public can view active exams" on public.exams
     for select using (is_active = true);
+
+  create or replace function public.increment_user_score(p_user_id uuid, p_delta numeric)
+  returns public.users
+  language plpgsql
+  security definer
+  set search_path = public
+  as $$
+  declare updated public.users;
+  begin
+    update public.users
+    set score = round((score + coalesce(p_delta, 0))::numeric, 2)
+    where id = p_user_id
+    returning * into updated;
+    return updated;
+  end;
+  $$;
+
+  create or replace function public.recalc_ranks()
+  returns void
+  language plpgsql
+  security definer
+  set search_path = public
+  as $$
+  begin
+    with ranked as (
+      select id, row_number() over (order by score desc, created_at asc) as r
+      from public.users
+    )
+    update public.users u
+    set rank = ranked.r
+    from ranked
+    where u.id = ranked.id;
+  end;
+  $$;

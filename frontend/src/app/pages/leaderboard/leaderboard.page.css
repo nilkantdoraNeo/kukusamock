@@ -2,6 +2,7 @@
   padding: 18px 16px 96px;
   display: grid;
   gap: 12px;
+  color: var(--text-primary);
 }
 
 .topbar {
@@ -13,24 +14,27 @@
 .title {
   font-size: 20px;
   font-weight: 700;
+  color: var(--text-primary);
 }
 
 .subtitle {
   font-size: 12px;
-  color: #8b90a6;
+  color: var(--text-secondary);
 }
 
 .list {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: minmax(36px, auto) minmax(36px, auto) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
+  width: 100%;
+  color: var(--text-primary);
 }
 
 .list.me {
-  border: 1px solid #cfd9f2;
-  box-shadow: 0 12px 24px rgba(31, 74, 154, 0.12);
+  border: 1px solid var(--accent-soft);
+  box-shadow: 0 12px 24px rgba(15, 106, 101, 0.18);
 }
 
 .rank {
@@ -40,12 +44,12 @@
   display: grid;
   place-items: center;
   font-weight: 700;
-  color: #1f4a9a;
-  background: #eef2ff;
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .rank.top {
-  background: linear-gradient(135deg, #1f4a9a, #2f6df6);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #ffffff;
 }
 
@@ -53,8 +57,8 @@
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: #eef2ff;
-  color: #1f4a9a;
+  background: var(--surface-soft);
+  color: var(--accent);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -70,16 +74,23 @@
 .info {
   display: grid;
   gap: 4px;
+  min-width: 0;
 }
 
 .name {
   font-weight: 700;
-  font-size: 14px;
+  font-size: clamp(12px, 3.2vw, 14px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
 }
 
 .score {
   font-weight: 700;
-  color: #1f4a9a;
+  color: var(--accent);
+  white-space: nowrap;
+  font-size: clamp(12px, 3vw, 14px);
 }
 
 .empty-state {
@@ -89,4 +100,53 @@
 
 .small {
   font-size: 12px;
+}
+
+.info .muted {
+  font-size: clamp(10px, 2.8vw, 12px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+:host ion-content.app-root {
+  --background: var(--bg);
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+@media (max-width: 360px) {
+  .list {
+    grid-template-columns: 36px 36px minmax(0, 1fr);
+  }
+
+  .score {
+    grid-column: 1 / -1;
+    padding-left: 84px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 320px) {
+  .page {
+    padding: 16px 12px 96px;
+  }
+
+  .rank,
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 12px;
+  }
+
+  .list {
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .score {
+    padding-left: 78px;
+  }
 }

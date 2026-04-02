@@ -11,16 +11,80 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap');
 
 :root {
-  --bg: #f6f7fb;
-  --text-primary: #1f2233;
-  --text-secondary: #8b90a6;
+  --bg: #f3f8f7;
+  --text-primary: #0e2a2a;
+  --text-secondary: #4b6b6a;
   --surface: #ffffff;
   --surface-strong: #ffffff;
-  --glass-shadow: 0 12px 26px rgba(32, 44, 92, 0.12);
-  --accent: #1f4a9a;
-  --accent-2: #2f6df6;
-  --accent-soft: rgba(47, 109, 246, 0.15);
-  --border-soft: #e6e9f2;
+  --surface-soft: #f1f7f6;
+  --border-soft: #d6e6e4;
+  --glass-shadow: 0 12px 26px rgba(11, 59, 59, 0.12);
+  --accent: #0f6a65;
+  --accent-2: #22c1b3;
+  --accent-strong: #0b3b3b;
+  --accent-soft: rgba(34, 193, 179, 0.16);
+  --success: #1b7f3b;
+  --success-soft: #e6f6ec;
+  --warning: #c47f13;
+  --warning-soft: #fff3d9;
+  --danger: #c0392b;
+  --danger-soft: #fff0f0;
+  --shadow-strong: 0 20px 40px rgba(11, 59, 59, 0.18);
+  color-scheme: light;
+}
+
+:root.theme-dark,
+.theme-dark {
+  --bg: #0b1515;
+  --text-primary: #e6f3f1;
+  --text-secondary: #b6cecb;
+  --surface: #111f1f;
+  --surface-strong: #0f1b1b;
+  --surface-soft: #121f1f;
+  --border-soft: #1f3535;
+  --glass-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+  --accent: #22c1b3;
+  --accent-2: #39d7c9;
+  --accent-strong: #0f6a65;
+  --accent-soft: rgba(34, 193, 179, 0.2);
+  --success: #36c97a;
+  --success-soft: rgba(54, 201, 122, 0.16);
+  --warning: #f3b74b;
+  --warning-soft: rgba(243, 183, 75, 0.18);
+  --danger: #f26b6b;
+  --danger-soft: rgba(242, 107, 107, 0.18);
+  --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+:root.theme-light,
+.theme-light {
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light):not(.theme-dark) {
+    --bg: #0b1515;
+    --text-primary: #e6f3f1;
+    --text-secondary: #b6cecb;
+    --surface: #111f1f;
+    --surface-strong: #0f1b1b;
+    --surface-soft: #121f1f;
+    --border-soft: #1f3535;
+    --glass-shadow: 0 12px 26px rgba(0, 0, 0, 0.45);
+    --accent: #22c1b3;
+    --accent-2: #39d7c9;
+    --accent-strong: #0f6a65;
+    --accent-soft: rgba(34, 193, 179, 0.2);
+    --success: #36c97a;
+    --success-soft: rgba(54, 201, 122, 0.16);
+    --warning: #f3b74b;
+    --warning-soft: rgba(243, 183, 75, 0.18);
+    --danger: #f26b6b;
+    --danger-soft: rgba(242, 107, 107, 0.18);
+    --shadow-strong: 0 20px 40px rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
 }
 
 * {
@@ -47,6 +111,75 @@ a {
 .app-root {
   --background: transparent;
   background: var(--bg);
+}
+
+.theme-toggle {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: 12px;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  box-shadow: var(--glass-shadow);
+}
+
+.theme-toggle .toggle-icon {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+}
+
+.theme-toggle svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--accent);
+  stroke-width: 1.8;
+  fill: none;
+}
+
+.theme-toggle svg circle {
+  fill: var(--accent);
+  stroke: none;
+}
+
+.theme-toggle svg path {
+  fill: var(--accent);
+  stroke: none;
+}
+
+.theme-transition,
+.theme-transition * {
+  transition: background-color 900ms ease, color 900ms ease, border-color 900ms ease, box-shadow 900ms ease;
+}
+
+.theme-wipe {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  pointer-events: none;
+  opacity: 0.98;
+  animation: themeWipe 1000ms cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  will-change: transform;
+}
+
+@keyframes themeWipe {
+  from {
+    transform: translateY(0);
+    opacity: 0.98;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0.2;
+  }
 }
 
 .page {
@@ -86,9 +219,9 @@ a {
   justify-content: center;
   padding: 12px 18px;
   border-radius: 12px;
-  border: 1px solid rgba(47, 109, 246, 0.35);
+  border: 1px solid var(--accent-soft);
   background: var(--surface-strong);
-  color: #1f4a9a;
+  color: var(--accent);
   font-weight: 700;
   cursor: pointer;
 }

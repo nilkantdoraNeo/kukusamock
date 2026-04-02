@@ -1,11 +1,12 @@
-import { Component, effect, NgZone } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, effect, NgZone, inject } from '@angular/core';
+import { CommonModule, DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { IonContent, IonInput, IonItem, IonLabel } from '@ionic/angular/standalone';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { UserProfile } from '../../models/user.model';
 import { BottomNavComponent } from '../../components/bottom-nav/bottom-nav.component';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({
   selector: 'app-profile',
@@ -13,10 +14,58 @@ import { BottomNavComponent } from '../../components/bottom-nav/bottom-nav.compo
   imports: [CommonModule, FormsModule, IonContent, IonInput, IonItem, IonLabel, BottomNavComponent],
   template: `
     <ion-content class="app-root">
-      <div class="page">
-        <header class="topbar">
-          <div class="title">Kukusa Mock</div>
+      <button
+        class="theme-toggle"
+        type="button"
+        (click)="toggleTheme()"
+        [attr.aria-label]="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+        <span class="toggle-icon" aria-hidden="true">
+          <svg *ngIf="theme === 'dark'" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="5" />
+            <g stroke-linecap="round">
+              <line x1="12" y1="1.5" x2="12" y2="4.2" />
+              <line x1="12" y1="19.8" x2="12" y2="22.5" />
+              <line x1="1.5" y1="12" x2="4.2" y2="12" />
+              <line x1="19.8" y1="12" x2="22.5" y2="12" />
+              <line x1="4.2" y1="4.2" x2="6.1" y2="6.1" />
+              <line x1="17.9" y1="17.9" x2="19.8" y2="19.8" />
+              <line x1="4.2" y1="19.8" x2="6.1" y2="17.9" />
+              <line x1="17.9" y1="6.1" x2="19.8" y2="4.2" />
+            </g>
+          </svg>
+          <svg *ngIf="theme !== 'dark'" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M21 14.5a8.5 8.5 0 1 1-11.5-11 9.5 9.5 0 1 0 11.5 11Z" />
+          </svg>
+        </span>
+      </button>
+      <div class="theme-wipe" *ngIf="isTransitioning" [style.background]="wipeColor"></div>
+      <div class="page auth-shell">
+        <header class="topbar" *ngIf="auth.user(); else authHeader">
+          <div>
+            <div class="title">Candidate Profile</div>
+            <div class="subtitle">Keep your exam identity and contact details updated.</div>
+          </div>
         </header>
+        <ng-template #authHeader>
+          <header class="auth-header">
+            <div class="header-row">
+              <div>
+                <div class="title">Medico Practice Portal</div>
+                <div class="subtitle">Log in to start timed clinical mocks and review answers.</div>
+                <div class="header-stickers">
+                  <span class="sticker accent">NEET‑PG</span>
+                  <span class="sticker">FMGE</span>
+                  <span class="sticker soft">Clinical MCQs</span>
+                </div>
+              </div>
+              <div class="seal" aria-hidden="true">
+                <div class="seal-icon">+</div>
+                <div class="seal-text">MBBS</div>
+              </div>
+            </div>
+            <div class="pulse-line" aria-hidden="true"></div>
+          </header>
+        </ng-template>
 
         <div class="glass-card profile-card" *ngIf="auth.user(); else authForm">
           <div class="profile-header">
@@ -62,10 +111,23 @@ import { BottomNavComponent } from '../../components/bottom-nav/bottom-nav.compo
 
         <ng-template #authForm>
           <form class="glass-card form" (ngSubmit)="submit()">
+            <div class="form-head">
+              <div class="form-title">{{ mode === 'login' ? 'Medico Login' : 'Create Medico Account' }}</div>
+              <div class="form-sub">
+                {{ mode === 'login'
+                  ? 'Resume clinical practice tests and review your attempts.'
+                  : 'Start clinical mocks with focused feedback.' }}
+              </div>
+            </div>
+            <div class="sticker-row">
+              <span class="sticker accent">Timed</span>
+              <span class="sticker">Negative Marking</span>
+              <span class="sticker soft">Smart Review</span>
+            </div>
             <div class="notice" *ngIf="notice">{{ notice }}</div>
             <div class="tab-row">
-              <button class="tab" type="button" [class.active]="mode==='login'" (click)="mode='login'">Login</button>
-              <button class="tab" type="button" [class.active]="mode==='signup'" (click)="mode='signup'">Signup</button>
+              <button class="tab" type="button" [class.active]="mode==='login'" (click)="mode='login'" [disabled]="authLoading">Login</button>
+              <button class="tab" type="button" [class.active]="mode==='signup'" (click)="mode='signup'" [disabled]="authLoading">Signup</button>
             </div>
 
             <ion-item class="input" *ngIf="mode === 'signup'">
@@ -93,7 +155,11 @@ import { BottomNavComponent } from '../../components/bottom-nav/bottom-nav.compo
               <ion-input name="password" type="password" autocomplete="current-password" [(ngModel)]="password"></ion-input>
             </ion-item>
 
-            <button class="btn-primary" type="submit">Continue</button>
+            <button class="btn-primary" type="submit" [disabled]="authLoading">
+              {{ authLoading
+                ? (mode === 'login' ? 'Logging in...' : 'Creating account...')
+                : (mode === 'login' ? 'Login & Start Practice' : 'Create Account') }}
+            </button>
           </form>
         </ng-template>
 
@@ -104,11 +170,14 @@ import { BottomNavComponent } from '../../components/bottom-nav/bottom-nav.compo
   styleUrls: ['./profile.page.css']
 })
 export class ProfilePage {
+  private document = inject(DOCUMENT);
+  private themeService = inject(ThemeService);
   email = '';
   password = '';
   mode: 'login' | 'signup' = 'login';
   returnUrl = '/home';
   notice = '';
+  authLoading = false;
 
   signupUsername = '';
   signupPhone = '';
@@ -119,6 +188,9 @@ export class ProfilePage {
   profileAge: number | null = null;
   avatarPreview = '';
   avatarData = '';
+  isTransitioning = false;
+  wipeColor = '';
+  private wipeTimer: number | undefined;
 
   constructor(
     public auth: AuthService,
@@ -152,12 +224,25 @@ export class ProfilePage {
     }
   }
 
+  get theme() {
+    return this.themeService.theme;
+  }
+
+  toggleTheme() {
+    const next = this.themeService.theme === 'dark' ? 'light' : 'dark';
+    this.wipeColor = next === 'light' ? '#0b0b0b' : '#ffffff';
+    this.themeService.applyTheme(next);
+    this.startWipe();
+  }
+
   submit() {
+    if (this.authLoading) return;
     if (this.mode === 'signup') {
       if (!this.signupUsername || !this.signupPhone || !this.signupAge) {
         this.notice = 'Please fill all signup fields.';
         return;
       }
+      this.authLoading = true;
       this.auth.signup({
         username: this.signupUsername,
         email: this.email,
@@ -168,6 +253,7 @@ export class ProfilePage {
         next: (res) => {
           this.notice = '';
           this.syncProfile(res.user);
+          this.authLoading = false;
           this.navigateAfterAuth();
         },
         error: (err) => {
@@ -177,22 +263,27 @@ export class ProfilePage {
             this.notice = 'User already exists. Please log in.';
             this.mode = 'login';
             this.password = '';
+            this.authLoading = false;
             return;
           }
           this.notice = rawMessage || 'Signup failed. Please try again.';
+          this.authLoading = false;
         }
       });
       return;
     }
 
+    this.authLoading = true;
     this.auth.login(this.email, this.password).subscribe({
       next: (res) => {
         this.notice = '';
         this.syncProfile(res.user);
+        this.authLoading = false;
         this.navigateAfterAuth();
       },
       error: (err) => {
         this.notice = err?.error?.message || 'Login failed. Please try again.';
+        this.authLoading = false;
       }
     });
   }
@@ -263,5 +354,17 @@ export class ProfilePage {
     this.zone.run(() => {
       this.router.navigateByUrl(target, { replaceUrl: true });
     });
+  }
+
+  private startWipe() {
+    if (this.wipeTimer) {
+      window.clearTimeout(this.wipeTimer);
+    }
+    this.isTransitioning = true;
+    this.document.documentElement.classList.add('theme-transition');
+    this.wipeTimer = window.setTimeout(() => {
+      this.isTransitioning = false;
+      this.document.documentElement.classList.remove('theme-transition');
+    }, 1000);
   }
 }

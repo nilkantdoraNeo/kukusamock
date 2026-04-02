@@ -14,7 +14,8 @@ const submitSchema = z.object({
       answer: z.string()
     })),
     question_ids: z.array(z.number()).optional(),
-    total_count: z.number().optional()
+    total_count: z.number().optional(),
+    quiz_token: z.string().min(10)
   })
 });
 

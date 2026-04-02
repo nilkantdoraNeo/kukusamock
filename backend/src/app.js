@@ -14,15 +14,18 @@ import { errorHandler } from './middleware/error.middleware.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 const isProd = process.env.NODE_ENV === 'production';
-const corsOrigins = (process.env.CORS_ORIGIN || '')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-const corsOptions = corsOrigins.length ? { origin: corsOrigins } : { origin: '*' };
+const corsOptions = {
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  optionsSuccessStatus: 204
+};
 
 app.disable('etag');
 app.disable('x-powered-by');
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '7mb' }));
 app.use(express.urlencoded({ extended: false, limit: '7mb' }));
 app.use(morgan(isProd ? 'combined' : 'dev'));

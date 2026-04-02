@@ -1,26 +1,87 @@
 import { supabaseAdmin } from './supabase.js';
 import { seededShuffle } from '../utils/seededShuffle.js';
 
-export async function fetchQuizQuestions({ daily = true, limit = 10, examId, random = false } = {}) {
+const DEFAULT_POOL_SIZE = Number(process.env.QUIZ_POOL_SIZE || 500);
+
+function hashSeed(seed) {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function seededUnitRandom(seedStr) {
+  let x = hashSeed(seedStr);
+  x ^= x << 13;
+  x ^= x >>> 17;
+  x ^= x << 5;
+  return (x >>> 0) / 4294967296;
+}
+
+function baseQuery({ examId, difficultyList, select, selectOptions }) {
   let query = supabaseAdmin
     .from('quizzes')
-    .select('id, exam_id, question, option_a, option_b, option_c, option_d, explanation')
+    .select(select, selectOptions)
     .eq('is_active', true);
   if (examId) {
     query = query.eq('exam_id', examId);
   }
-  const { data, error } = await query.limit(200);
+  if (difficultyList.length) {
+    query = query.in('difficulty', difficultyList);
+  }
+  return query;
+}
 
+export async function fetchQuizQuestions({ daily = true, limit = 10, examId, random = false, difficulty = [] } = {}) {
+  const safeLimit = Math.max(1, Number(limit) || 10);
+  const difficultyList = Array.isArray(difficulty)
+    ? difficulty.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean)
+    : [];
+
+  const selectFields = 'id, exam_id, question, option_a, option_b, option_c, option_d';
+
+  if (!daily && !random) {
+    const { data, error } = await baseQuery({ examId, difficultyList, select: selectFields })
+      .order('id', { ascending: true })
+      .limit(safeLimit);
+    if (error) throw error;
+    return data || [];
+  }
+
+  const { count, error: countError } = await baseQuery({
+    examId,
+    difficultyList,
+    select: 'id',
+    selectOptions: { count: 'exact', head: true }
+  });
+  if (countError) throw countError;
+  const total = Number(count || 0);
+  if (!total) return [];
+
+  const poolSize = Math.max(safeLimit, DEFAULT_POOL_SIZE);
+  const poolCount = Math.min(total, poolSize);
+  const maxOffset = Math.max(0, total - poolCount);
+
+  const seedBase = `${new Date().toISOString().slice(0, 10)}:${examId || 'all'}:${difficultyList.join('|')}`;
+  const offset = maxOffset > 0
+    ? (random
+      ? Math.floor(Math.random() * (maxOffset + 1))
+      : Math.floor(seededUnitRandom(seedBase) * (maxOffset + 1)))
+    : 0;
+
+  const { data, error } = await baseQuery({ examId, difficultyList, select: selectFields })
+    .order('id', { ascending: true })
+    .range(offset, offset + poolCount - 1);
   if (error) throw error;
   const questions = data || [];
 
-  if (!daily && !random) return questions.slice(0, limit);
-
   const seed = random
     ? `${Date.now()}-${Math.random()}`
-    : `${new Date().toISOString().slice(0, 10)}:${examId || 'all'}`;
+    : seedBase;
   const shuffled = seededShuffle(questions, seed);
-  return shuffled.slice(0, limit);
+  return shuffled.slice(0, safeLimit);
 }
 
 export async function gradeQuiz({ answers = [], questionIds = [], exam = {} } = {}) {

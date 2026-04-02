@@ -67,8 +67,19 @@ export async function updateUserProfile(userId, updates = {}) {
 }
 
 export async function updateUserScore(userId, scoreDelta) {
+  const delta = Number(scoreDelta || 0);
+  try {
+    const { data, error } = await supabaseAdmin
+      .rpc('increment_user_score', { p_user_id: userId, p_delta: delta });
+    if (!error && data) {
+      return data;
+    }
+  } catch {
+    // fall back to non-atomic update
+  }
+
   const profile = await getUserProfile(userId);
-  const newScore = Number(profile.score || 0) + Number(scoreDelta || 0);
+  const newScore = Number(profile.score || 0) + delta;
   const rounded = Math.round(newScore * 100) / 100;
 
   const { data, error } = await supabaseAdmin
@@ -83,6 +94,13 @@ export async function updateUserScore(userId, scoreDelta) {
 }
 
 export async function recalcRanks() {
+  try {
+    const { error } = await supabaseAdmin.rpc('recalc_ranks');
+    if (!error) return;
+  } catch {
+    // fall back to manual rank update
+  }
+
   const { data, error } = await supabaseAdmin
     .from('users')
     .select('id, email, score')

@@ -12,20 +12,29 @@ export class ApiService {
 
   fetchQuiz(
     examId: number,
-    options: { daily?: boolean; limit?: number; random?: boolean } = {}
+    options: { daily?: boolean; limit?: number; random?: boolean; difficulty?: string | string[] } = {}
   ) {
     const daily = options.daily !== false;
     const limit = Number(options.limit || 0) || undefined;
     const random = options.random === true;
+    const difficulty = Array.isArray(options.difficulty)
+      ? options.difficulty.filter(Boolean).join(',')
+      : String(options.difficulty || '').trim();
     const cacheBuster = Date.now();
     const limitParam = limit ? `&limit=${limit}` : '';
     const randomParam = random ? '&random=true' : '';
-    return this.http.get<QuizQuestion[]>(
-      `${environment.apiUrl}/quiz?examId=${examId}&daily=${daily}${limitParam}${randomParam}&t=${cacheBuster}`
+    const difficultyParam = difficulty ? `&difficulty=${encodeURIComponent(difficulty)}` : '';
+    return this.http.get<{
+      questions: QuizQuestion[];
+      quiz_token: string;
+      total_count?: number;
+      exam_id?: number;
+    } | QuizQuestion[]>(
+      `${environment.apiUrl}/quiz?examId=${examId}&daily=${daily}${limitParam}${randomParam}${difficultyParam}&t=${cacheBuster}`
     );
   }
 
-  submitQuiz(examId: number, answers: QuizAnswer[], questionIds: number[] = [], totalCount?: number) {
+  submitQuiz(examId: number, answers: QuizAnswer[], questionIds: number[] = [], totalCount?: number, quizToken?: string) {
     return this.http.post<{
       score: number;
       correct: Record<number, string>;
@@ -33,7 +42,7 @@ export class ApiService {
       stats?: { correctCount: number; wrongCount: number; skippedCount: number; totalCount: number };
     }>(
       `${environment.apiUrl}/quiz/submit`,
-      { exam_id: examId, answers, question_ids: questionIds, total_count: totalCount }
+      { exam_id: examId, answers, question_ids: questionIds, total_count: totalCount, quiz_token: quizToken }
     );
   }
 
@@ -106,8 +115,20 @@ export class ApiService {
     }>(`${environment.apiUrl}/attempts/latest`);
   }
 
+  attemptById(attemptId: number) {
+    return this.http.get<{
+      attempt: any;
+      answers: any[];
+      correct: Record<number, string>;
+    }>(`${environment.apiUrl}/attempts/${attemptId}`);
+  }
+
   attempts(limit = 5) {
     return this.http.get<{ attempts: any[] }>(`${environment.apiUrl}/attempts?limit=${limit}`);
+  }
+
+  incorrectAnswers(limit = 50) {
+    return this.http.get<{ items: any[] }>(`${environment.apiUrl}/attempts/incorrect?limit=${limit}`);
   }
 
   private normalizeList<T>(res: any): T[] {
